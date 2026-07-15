@@ -1,4 +1,4 @@
-﻿services:
+services:
   homelabtv-backend:
     build: .
     container_name: homelabtv-backend

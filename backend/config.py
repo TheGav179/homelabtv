@@ -1,4 +1,4 @@
-﻿import os
+import os
 
 # Get a free API key at https://www.themoviedb.org/settings/api and pass it
 # via the TMDB_API_KEY environment variable. Without it, the guide still works
