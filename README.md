@@ -97,12 +97,16 @@ On first launch the app asks for the `READ_TV_LISTINGS` permission (required to 
 | Key | Action |
 |---|---|
 | D-pad Up/Down, CH +/- | Change channel |
-| Number keys | Direct channel entry (e.g. `7`→`7.1`, `20`+`.3`) |
+| Last-channel key, D-pad Left | Jump back to the previously watched channel |
+| Number keys | Direct channel entry (`0` `6` → `06.x`, `6` `1` → `61.x`; see Caveats) |
 | OK | Toggle channel info bar |
-| OK (long press) | Detailed banner: show info, audio + subtitle tracks |
-| GUIDE | Open/close the timeline guide |
+| OK (long press) | Detailed banner: show/episode info, audio + subtitle tracks |
+| OK (long press, in guide) | Set/remove a reminder on a future program |
+| GUIDE | Open/close the timeline guide (opens on the current channel) |
 | INFO | Info bar with clock; quick second press → detailed banner |
 | BACK | Close current overlay / open the side menu |
+
+When a reminded program starts, a banner appears: OK tunes to it, BACK dismisses.
 
 ## Caveats
 
