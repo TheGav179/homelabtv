@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="320dp"
+    android:height="180dp"
+    android:viewportWidth="320"
+    android:viewportHeight="180">
+
+    <!-- White background -->
+    <path
+        android:fillColor="#FAFBFD"
+        android:pathData="M0,0h320v180h-320z" />
+
+    <!-- Monitor frame -->
+    <path android:pathData="M42,42 L150,42 A5,5 0 0 1 155,47 L155,117 A5,5 0 0 1 150,122 L42,122 A5,5 0 0 1 37,117 L37,47 A5,5 0 0 1 42,42 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="37"
+                android:startY="122"
+                android:endX="155"
+                android:endY="42"
+                android:startColor="#1565C0"
+                android:endColor="#26C6DA" />
+        </aapt:attr>
+    </path>
+
+    <!-- Thin inner highlight border -->
+    <path
+        android:pathData="M43,48 L149,48 L149,116 L43,116 Z"
+        android:fillColor="#00000000"
+        android:strokeColor="#8CFFFFFF"
+        android:strokeWidth="2" />
+
+    <!-- Stand and base -->
+    <path
+        android:fillColor="#1976D2"
+        android:pathData="M88,122 L104,122 L109,136 L83,136 Z" />
+    <path
+        android:fillColor="#1E88E5"
+        android:pathData="M74,136 L118,136 A4,4 0 0 1 118,144 L74,144 A4,4 0 0 1 74,136 Z" />
+
+    <!-- TV letters -->
+    <path android:pathData="M178,58 L232,58 L232,72 L212.5,72 L212.5,122 L197.5,122 L197.5,72 L178,72 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="178"
+                android:startY="122"
+                android:endX="296"
+                android:endY="58"
+                android:startColor="#1565C0"
+                android:endColor="#26C6DA" />
+        </aapt:attr>
+    </path>
+    <path android:pathData="M240,58 L256,58 L268,104 L280,58 L296,58 L276,122 L260,122 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="178"
+                android:startY="122"
+                android:endX="296"
+                android:endY="58"
+                android:startColor="#1976D2"
+                android:endColor="#4DD0E1" />
+        </aapt:attr>
+    </path>
+</vector>

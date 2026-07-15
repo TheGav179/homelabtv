@@ -1,0 +1,16 @@
+# Android
+android-app/build/
+android-app/app/build/
+android-app/.gradle/
+android-app/.kotlin/
+android-app/local.properties
+*.iml
+.idea/
+.DS_Store
+
+# Backend
+backend/data/
+backend/static/logos/
+__pycache__/
+*.pyc
+*.db

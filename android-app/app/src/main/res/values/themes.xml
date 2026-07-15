@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Dark launch window so the app never flashes white while loading -->
+    <style name="Theme.HomelabTV" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#FF181818</item>
+        <item name="android:colorBackground">#FF181818</item>
+        <item name="android:windowSplashScreenBackground" tools:targetApi="s">#FF181818</item>
+    </style>
+</resources>
