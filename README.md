@@ -11,14 +11,14 @@ Most self-hosted live TV setups (Plex, Jellyfin, Emby, Channels DVR, Tvheadend) 
 HomelabTV splits the jobs:
 
 ```
-┌─────────────────────────┐        ┌──────────────────────────────┐
-│ Android TV               │        │ Homelab server (Docker)      │
-│                          │  HTTP  │                              │
-│  antenna → TV tuner ─────┼──╳─────┤  XMLTV files (WebGrab+Plus,  │
-│  (video never leaves     │ guide  │  zap2xml, ...)               │
-│   the TV)                │  data  │  + TMDB artwork cache        │
-│                          │  only  │  + channel mapping web UI    │
-└─────────────────────────┘        └──────────────────────────────┘
+┌─────────────────────────┐          ┌──────────────────────────────┐
+│       Android TV        │          │ Homelab server (Docker)      │
+│                         │   HTTP   │                              │
+│  Antenna → TV tuner ────┼────╳─────┤  XMLTV files (WebGrab+Plus,  │
+│  (video never leaves    │   guide  │  zap2xml, ...)               │
+│   the TV)               │   data   │  + TMDB artwork cache        │
+│                         │   only   │  + channel mapping web UI    │
+└─────────────────────────┘          └──────────────────────────────┘
 ```
 
 - **Video** comes from the TV's own ATSC tuner via Android's TV Input Framework. The server is never in the video path.
