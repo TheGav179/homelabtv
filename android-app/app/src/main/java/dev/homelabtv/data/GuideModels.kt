@@ -13,7 +13,13 @@ data class Program(
     val backdrop_url: String?,
     /** Season/episode as text, e.g. "S2 E6" (from XMLTV episode-num) */
     val episode: String? = null,
+    /** Episode name (from XMLTV sub-title) */
+    val episode_title: String? = null,
 )
+
+/** "Episode Name · S2 E6" — whatever parts exist, episode name first. */
+fun Program.episodeLine(): String =
+    listOfNotNull(episode_title, episode).joinToString(" · ")
 
 data class ChannelGuide(
     val physical_channel: String?,

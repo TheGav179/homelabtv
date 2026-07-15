@@ -42,6 +42,7 @@ import coil.compose.AsyncImage
 import dev.homelabtv.data.ChannelGuide
 import dev.homelabtv.data.PhysicalChannel
 import dev.homelabtv.data.XmltvTime
+import dev.homelabtv.data.episodeLine
 import dev.homelabtv.data.programAfter
 import dev.homelabtv.data.programAt
 import dev.homelabtv.theme.JellyfinBlue
@@ -275,6 +276,16 @@ fun ZapperOverlay(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
+                    val episodeLine = current?.episodeLine() ?: ""
+                    if (episodeLine.isNotEmpty()) {
+                        Text(
+                            episodeLine,
+                            color = TextSecondary,
+                            fontSize = 14.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                     val start = XmltvTime.parse(current?.start)
                     val stop = XmltvTime.parse(current?.stop)
                     if (start != null && stop != null && stop > start) {

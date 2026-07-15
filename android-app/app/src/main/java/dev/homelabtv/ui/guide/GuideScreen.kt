@@ -60,6 +60,7 @@ import dev.homelabtv.data.XmltvTime
 import dev.homelabtv.data.buildSlots
 import dev.homelabtv.data.channelMajor
 import dev.homelabtv.data.channelMinor
+import dev.homelabtv.data.episodeLine
 import dev.homelabtv.data.normalizeChannelNumber
 import dev.homelabtv.theme.AppBackground
 import dev.homelabtv.theme.JellyfinBlue
@@ -290,13 +291,24 @@ private fun HeroPanel(focused: Pair<ChannelGuide, Program?>?) {
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
+                val episodeLine = program?.episodeLine() ?: ""
+                if (episodeLine.isNotEmpty()) {
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        episodeLine,
+                        color = JellyfinBlue,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
                 val start = XmltvTime.parse(program?.start)
                 val stop = XmltvTime.parse(program?.stop)
                 if (start != null && stop != null) {
                     Spacer(Modifier.height(4.dp))
-                    val episodePrefix = program?.episode?.let { "$it · " } ?: ""
                     Text(
-                        "$episodePrefix${formatDay(start)} · ${formatClock(start)} – ${formatClock(stop)}",
+                        "${formatDay(start)} · ${formatClock(start)} – ${formatClock(stop)}",
                         color = TextSecondary,
                         fontSize = 13.sp,
                     )

@@ -81,13 +81,18 @@ def parse_xmltv_programs(file_path):
             desc_node = prog.find('desc')
             desc = desc_node.text if desc_node is not None else ""
 
+            # Episode name, e.g. <sub-title>The One With the Embassy Club</sub-title>
+            sub_node = prog.find('sub-title')
+            episode_title = sub_node.text.strip() if sub_node is not None and sub_node.text else None
+
             programs.append({
                 "channel_id": channel_id,
                 "start": start,
                 "stop": stop,
                 "title": title,
                 "description": desc,
-                "episode": parse_episode(prog)
+                "episode": parse_episode(prog),
+                "episode_title": episode_title
             })
     except Exception as e:
         print(f"Error parsing programmes from {file_path}: {e}")

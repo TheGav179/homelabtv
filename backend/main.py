@@ -172,6 +172,7 @@ async def get_enriched_guide(request: Request):
                 "stop": prog["stop"],
                 "description": prog["description"],
                 "episode": prog.get("episode"),
+                "episode_title": prog.get("episode_title"),
                 "poster_url": None,
                 "backdrop_url": None,
             }

@@ -41,6 +41,7 @@ import dev.homelabtv.data.ChannelGuide
 import dev.homelabtv.data.PhysicalChannel
 import dev.homelabtv.data.Program
 import dev.homelabtv.data.XmltvTime
+import dev.homelabtv.data.episodeLine
 import dev.homelabtv.data.programAfter
 import dev.homelabtv.data.programAt
 import dev.homelabtv.theme.JellyfinBlue
@@ -141,12 +142,15 @@ private fun InfoTab(current: Program?, next: Program?, now: Long) {
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            if (current?.episode != null) {
+            val episodeLine = current?.episodeLine() ?: ""
+            if (episodeLine.isNotEmpty()) {
                 Text(
-                    current.episode,
+                    episodeLine,
                     color = JellyfinBlue,
-                    fontSize = 13.sp,
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
             val start = XmltvTime.parse(current?.start)
@@ -215,10 +219,20 @@ private fun InfoTab(current: Program?, next: Program?, now: Long) {
                         )
                         val nextStart = XmltvTime.parse(next.start)
                         val nextMeta =
-                            listOfNotNull(next.episode, nextStart?.let { formatClock(it) })
+                            listOfNotNull(
+                                    next.episode_title,
+                                    next.episode,
+                                    nextStart?.let { formatClock(it) },
+                                )
                                 .joinToString(" · ")
                         if (nextMeta.isNotEmpty()) {
-                            Text(nextMeta, color = TextSecondary, fontSize = 12.sp)
+                            Text(
+                                nextMeta,
+                                color = TextSecondary,
+                                fontSize = 12.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
                         }
                     }
                 }
