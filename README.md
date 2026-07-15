@@ -98,7 +98,7 @@ On first launch the app asks for the `READ_TV_LISTINGS` permission (required to 
 
 ## Caveats
 
-- Channel-number entry assumes ATSC-style `major.minor` numbering (US-centric; a first digit above 5 is treated as a complete single-digit major). DVB regions may want to adjust `MainActivity.appendDigit`.
+- Channel-number entry uses ATSC-style `major.minor` numbering and defaults to **leading-zero** entry: majors are two digits, so channel 6.1 is typed `0` `6` (shown as `06.`) and 61.1 is `6` `1`. **Settings → Number Entry** switches to a quick mode where a first digit above 5 completes the major by itself (`7` → `7.x`) — convenient in markets with no two-digit majors starting with 6–9, but it makes channels like 61.1 unreachable by direct entry. In either mode, typing a partial number and pausing for 2 seconds commits what you typed (so plain `6` still reaches 6.1).
 - Manufacturer firmware quirks vary. Example: Sony shows its own system InfoBar on the ⓘ key at firmware level, which no app can suppress — that's why everything is also reachable via OK.
 - The first guide request after new XMLTV data lands is slow while new titles are enriched against TMDB (cached for 7 days afterward); the app tolerates this with generous timeouts.
 

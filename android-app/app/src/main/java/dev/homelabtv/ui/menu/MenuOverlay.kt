@@ -16,6 +16,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
@@ -58,6 +59,8 @@ fun MenuOverlay(
     onCloseSettings: () -> Unit,
     onReloadChannels: () -> Unit,
     onScanChannels: () -> Unit,
+    numberEntryQuickMode: Boolean,
+    onToggleNumberEntry: () -> Unit,
     onRestartApp: () -> Unit,
     onExit: () -> Unit,
     modifier: Modifier = Modifier,
@@ -85,6 +88,11 @@ fun MenuOverlay(
                 Spacer(Modifier.height(16.dp))
                 MenuListItem("Reload Channel List", Icons.Default.Refresh, onReloadChannels, focusRequester = firstItem)
                 MenuListItem("Scan Channels (TV Setup)", Icons.Default.Search, onScanChannels)
+                MenuListItem(
+                    if (numberEntryQuickMode) "Number Entry: Quick (7 → 7.x)" else "Number Entry: Leading Zero (07.x)",
+                    Icons.Default.Edit,
+                    onToggleNumberEntry,
+                )
                 Spacer(Modifier.height(16.dp))
                 TextField(
                     value = serverUrl,

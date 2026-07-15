@@ -180,9 +180,11 @@ private fun HomelabApp(viewModel: MainViewModel = viewModel()) {
         }
     }
 
-    // Direct channel entry from the remote's number keys. Rules: a first digit
-    // above 5 completes the major number by itself (no 2-digit majors start with
-    // 6-9 here), and the decimal part maxes out at two digits (hundredths).
+    // Direct channel entry from the remote's number keys. Majors complete after
+    // two digits — in the default leading-zero mode 6.1 is typed "06" (so 61.1
+    // stays reachable); quick mode lets a first digit above 5 complete the major
+    // by itself. The decimal part maxes out at two digits (hundredths), and a
+    // partial entry commits after a 2s pause either way.
     var numberEntry by remember { mutableStateOf("") }
     val commitEntry: () -> Unit = {
         val target = numberEntry.trimEnd('.')
@@ -198,7 +200,13 @@ private fun HomelabApp(viewModel: MainViewModel = viewModel()) {
             if (entry.substringAfter('.').length < 2) entry += digit
         } else {
             entry += digit
-            if ((entry.length == 1 && digit > 5) || entry.length == 2) entry += "."
+            val majorDone =
+                if (viewModel.numberEntryQuickMode) {
+                    (entry.length == 1 && digit > 5) || entry.length == 2
+                } else {
+                    entry.length == 2
+                }
+            if (majorDone) entry += "."
         }
         numberEntry = entry
     }
@@ -409,6 +417,8 @@ private fun HomelabApp(viewModel: MainViewModel = viewModel()) {
                             }
                         }
                     },
+                    numberEntryQuickMode = viewModel.numberEntryQuickMode,
+                    onToggleNumberEntry = viewModel::toggleNumberEntryMode,
                     onRestartApp = {
                         val pm = context.packageManager
                         val relaunch =

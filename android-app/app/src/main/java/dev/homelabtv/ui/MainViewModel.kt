@@ -37,6 +37,19 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     var serverUrl by mutableStateOf(prefs.getString("server_url", DEFAULT_SERVER_URL) ?: DEFAULT_SERVER_URL)
         private set
 
+    /**
+     * Number-entry style. false (default): leading-zero — majors are two digits,
+     * so 6.1 is typed "06" and 61.1 is "61". true: quick mode — a first digit
+     * above 5 completes the major by itself (handy where no majors start with 6-9).
+     */
+    var numberEntryQuickMode by mutableStateOf(prefs.getBoolean("number_entry_quick", false))
+        private set
+
+    fun toggleNumberEntryMode() {
+        numberEntryQuickMode = !numberEntryQuickMode
+        prefs.edit().putBoolean("number_entry_quick", numberEntryQuickMode).apply()
+    }
+
     val fallbackInputId: String? by lazy { channelRepository.defaultTunerInputId() }
 
     val currentChannel: PhysicalChannel?
