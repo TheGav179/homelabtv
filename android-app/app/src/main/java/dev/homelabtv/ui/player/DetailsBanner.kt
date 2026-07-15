@@ -141,6 +141,14 @@ private fun InfoTab(current: Program?, next: Program?, now: Long) {
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
+            if (current?.episode != null) {
+                Text(
+                    current.episode,
+                    color = JellyfinBlue,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
             val start = XmltvTime.parse(current?.start)
             val stop = XmltvTime.parse(current?.stop)
             if (start != null && stop != null && stop > start) {
@@ -206,8 +214,11 @@ private fun InfoTab(current: Program?, next: Program?, now: Long) {
                             overflow = TextOverflow.Ellipsis,
                         )
                         val nextStart = XmltvTime.parse(next.start)
-                        if (nextStart != null) {
-                            Text(formatClock(nextStart), color = TextSecondary, fontSize = 12.sp)
+                        val nextMeta =
+                            listOfNotNull(next.episode, nextStart?.let { formatClock(it) })
+                                .joinToString(" · ")
+                        if (nextMeta.isNotEmpty()) {
+                            Text(nextMeta, color = TextSecondary, fontSize = 12.sp)
                         }
                     }
                 }

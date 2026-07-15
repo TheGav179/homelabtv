@@ -11,6 +11,8 @@ data class Program(
     val description: String?,
     val poster_url: String?,
     val backdrop_url: String?,
+    /** Season/episode as text, e.g. "S2 E6" (from XMLTV episode-num) */
+    val episode: String? = null,
 )
 
 data class ChannelGuide(

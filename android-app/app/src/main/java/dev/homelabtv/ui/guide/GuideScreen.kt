@@ -294,8 +294,9 @@ private fun HeroPanel(focused: Pair<ChannelGuide, Program?>?) {
                 val stop = XmltvTime.parse(program?.stop)
                 if (start != null && stop != null) {
                     Spacer(Modifier.height(4.dp))
+                    val episodePrefix = program?.episode?.let { "$it · " } ?: ""
                     Text(
-                        "${formatDay(start)} · ${formatClock(start)} – ${formatClock(stop)}",
+                        "$episodePrefix${formatDay(start)} · ${formatClock(start)} – ${formatClock(stop)}",
                         color = TextSecondary,
                         fontSize = 13.sp,
                     )

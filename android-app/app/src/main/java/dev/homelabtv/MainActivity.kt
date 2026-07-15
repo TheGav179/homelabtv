@@ -154,6 +154,13 @@ private fun HomelabApp(viewModel: MainViewModel = viewModel()) {
             zapperVisible = false
         }
     }
+    // The detailed banner times itself out
+    LaunchedEffect(showDetails) {
+        if (showDetails) {
+            delay(10_000)
+            showDetails = false
+        }
+    }
     // Announce the current channel with the banner once the app has started up
     LaunchedEffect(guideState.hasLoadedCache) {
         if (guideState.hasLoadedCache && zapCounter == 0) {
