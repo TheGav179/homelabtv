@@ -24,6 +24,12 @@ HomelabTV splits the jobs:
 - **Video** comes from the TV's own ATSC tuner via Android's TV Input Framework. The server is never in the video path.
 - **Guide data** (schedules, posters, backdrops, logos) comes from the server and is cached on the TV. Server offline? Everything keeps working — the guide just shows how old its data is.
 
+## Built for WAN-blocked TVs
+
+This app assumes a mindset where the smart TV **never touches the internet**. A common way to get there: give the TV a static IP with a bogus (or empty) gateway, or block its MAC at the router — it can still reach everything on your LAN, but nothing beyond it. Telemetry, ads, and forced updates die at the router.
+
+HomelabTV is proof that the TV doesn't need WAN for any of this: live video comes off the antenna, and everything that *does* need the internet — XMLTV scraping, TMDB artwork — happens **server-side**. The TV only ever talks to your server over plain HTTP on your LAN, and thanks to the offline-first cache it doesn't even need *that* to keep working.
+
 ## Features
 
 - Jellyfin-style dark UI with backdrop art from TMDB
@@ -72,6 +78,8 @@ services:
       - ./data:/data
     restart: unless-stopped
 ```
+
+> **Tip:** if a guide scraper starts getting IP-blocked, route just that container through a VPN with [gluetun](https://github.com/qmcgaw/gluetun) (`network_mode: "service:gluetun"` on the scraper). The HomelabTV backend itself has no reason to go through it — only the scrapers talk to the outside world.
 
 ### 2. App
 
