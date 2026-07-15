@@ -44,6 +44,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -109,6 +110,8 @@ fun GuideScreen(
     onTune: (ChannelGuide) -> Unit,
     modifier: Modifier = Modifier,
     initialChannelNumber: String? = null,
+    reminderKeys: Set<String> = emptySet(),
+    onToggleReminder: (ChannelGuide, Program) -> Unit = { _, _ -> },
 ) {
     val now = remember { System.currentTimeMillis() }
     val windowStart = remember(now) { now - now % HALF_HOUR_MS }
@@ -221,6 +224,8 @@ fun GuideScreen(
                                 focusedCell = row.channel to (slot as? GuideSlot.Show)?.program
                             },
                             onClickCell = { onTune(row.channel) },
+                            onLongClickShow = { program -> onToggleReminder(row.channel, program) },
+                            reminderKeys = reminderKeys,
                             onMoveVertical = { direction -> focusRow(rowIndex + direction) },
                         )
                     }
@@ -378,6 +383,8 @@ private fun GuideRow(
     scrollState: ScrollState,
     onFocusCell: (GuideSlot) -> Unit,
     onClickCell: () -> Unit,
+    onLongClickShow: (Program) -> Unit,
+    reminderKeys: Set<String>,
     onMoveVertical: (Int) -> Unit,
 ) {
     val channel = row.channel
@@ -419,8 +426,11 @@ private fun GuideRow(
                                 slot = slot,
                                 now = now,
                                 focusRequester = row.requesters[index],
+                                hasReminder =
+                                    "${normalizeChannelNumber(channel.physical_channel)}|${XmltvTime.parse(slot.program.start)}" in reminderKeys,
                                 onFocus = { onFocusCell(slot) },
                                 onClick = onClickCell,
+                                onLongClick = { onLongClickShow(slot.program) },
                                 onMoveVertical = onMoveVertical,
                             )
                         is GuideSlot.Gap ->
@@ -444,20 +454,38 @@ private fun ProgramBlock(
     slot: GuideSlot.Show,
     now: Long,
     focusRequester: FocusRequester,
+    hasReminder: Boolean,
     onFocus: () -> Unit,
     onClick: () -> Unit,
+    onLongClick: () -> Unit,
     onMoveVertical: (Int) -> Unit,
 ) {
     val interaction = remember { MutableInteractionSource() }
     val focused by interaction.collectIsFocusedAsState()
     val isAiring = now in slot.startMillis until slot.stopMillis
     val isPast = slot.stopMillis <= now
+    val isFuture = slot.startMillis > now
     Box(
         Modifier.width(widthFor(slot.startMillis, slot.stopMillis))
             .fillMaxHeight()
             .padding(2.dp)
             .focusRequester(focusRequester)
             .onFocusChanged { if (it.isFocused) onFocus() }
+            // Long-press OK on a future show toggles its reminder; a current
+            // show always tunes straight in — never a menu.
+            .onPreviewKeyEvent { event ->
+                val isOk =
+                    event.nativeKeyEvent.keyCode == KeyEvent.KEYCODE_DPAD_CENTER ||
+                        event.nativeKeyEvent.keyCode == KeyEvent.KEYCODE_ENTER
+                if (isOk && isFuture && event.type == KeyEventType.KeyUp &&
+                    event.nativeKeyEvent.eventTime - event.nativeKeyEvent.downTime >= 600
+                ) {
+                    onLongClick()
+                    true
+                } else {
+                    false
+                }
+            }
             .verticalGuideNav(onMoveVertical)
             .clip(RoundedCornerShape(6.dp))
             .background(
@@ -476,7 +504,7 @@ private fun ProgramBlock(
     ) {
         Column {
             Text(
-                slot.program.title ?: "",
+                (if (hasReminder) "⏰ " else "") + (slot.program.title ?: ""),
                 color =
                     when {
                         focused -> Color.Black

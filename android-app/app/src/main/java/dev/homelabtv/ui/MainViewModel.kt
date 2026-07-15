@@ -8,17 +8,23 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import dev.homelabtv.data.ChannelGuide
 import dev.homelabtv.data.ChannelRepository
 import dev.homelabtv.data.GuideRepository
 import dev.homelabtv.data.GuideState
 import dev.homelabtv.data.PhysicalChannel
+import dev.homelabtv.data.Program
+import dev.homelabtv.data.XmltvTime
 import dev.homelabtv.data.channelMajor
 import dev.homelabtv.data.channelMinor
 import dev.homelabtv.data.normalizeChannelNumber
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+
+data class Reminder(val channel: String, val title: String, val startMillis: Long)
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
 
@@ -64,6 +70,15 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 delay(REFRESH_INTERVAL_MS)
             }
         }
+        viewModelScope.launch {
+            // Delay first: Main.immediate would otherwise run checkReminders()
+            // synchronously inside the constructor, before the reminder
+            // properties below are initialized
+            while (true) {
+                delay(15_000)
+                checkReminders()
+            }
+        }
     }
 
     fun refreshNow() {
@@ -81,10 +96,27 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         prefs.edit().putString("server_url", url).apply()
     }
 
+    // ----- channel selection (tracks the previous channel for jump-back) -----
+
+    private var previousChannelIndex = -1
+
+    private fun selectChannel(index: Int) {
+        if (index == currentChannelIndex || index !in physicalChannels.indices) return
+        previousChannelIndex = currentChannelIndex
+        currentChannelIndex = index
+    }
+
+    /** Swap back to the channel watched before this one ("last channel" key). */
+    fun jumpBack(): Boolean {
+        if (previousChannelIndex !in physicalChannels.indices) return false
+        selectChannel(previousChannelIndex)
+        return true
+    }
+
     fun zap(delta: Int) {
         val size = physicalChannels.size
         if (size == 0) return
-        currentChannelIndex = ((currentChannelIndex + delta) % size + size) % size
+        selectChannel(((currentChannelIndex + delta) % size + size) % size)
     }
 
     /**
@@ -107,7 +139,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                     ?: majorMatches.minByOrNull { minorOf(it.value) }
             }
         if (match == null) return false
-        currentChannelIndex = match.index
+        selectChannel(match.index)
         return true
     }
 
@@ -120,14 +152,78 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         val target = normalizeChannelNumber(guide.physical_channel)
         val index = physicalChannels.indexOfFirst { normalizeChannelNumber(it.displayNumber) == target }
         if (index >= 0) {
-            currentChannelIndex = index
+            selectChannel(index)
             return true
         }
         return false
     }
 
+    // ----- program reminders -----
+
+    private val gson = Gson()
+
+    var reminders by mutableStateOf(loadReminders())
+        private set
+
+    /** The reminder whose show is starting right now, if any — drives the banner. */
+    var dueReminder by mutableStateOf<Reminder?>(null)
+        private set
+
+    private fun loadReminders(): List<Reminder> =
+        try {
+            val json = prefs.getString("reminders", null)
+            if (json == null) emptyList()
+            else gson.fromJson(json, object : TypeToken<List<Reminder>>() {}.type)
+        } catch (e: Exception) {
+            emptyList()
+        }
+
+    private fun saveReminders() {
+        prefs.edit().putString("reminders", gson.toJson(reminders)).apply()
+    }
+
+    /** @return true if a reminder was added, false if an existing one was removed. */
+    fun toggleReminder(channel: ChannelGuide, program: Program): Boolean {
+        val start = XmltvTime.parse(program.start) ?: return false
+        val number = normalizeChannelNumber(channel.physical_channel)
+        val existing = reminders.firstOrNull { it.channel == number && it.startMillis == start }
+        reminders =
+            if (existing != null) reminders - existing
+            else reminders + Reminder(number, program.title ?: "Program", start)
+        saveReminders()
+        return existing == null
+    }
+
+    private fun checkReminders() {
+        val now = System.currentTimeMillis()
+        // Drop reminders whose show is long underway
+        val stale = reminders.filter { it.startMillis + STALE_REMINDER_MS < now }
+        if (stale.isNotEmpty()) {
+            reminders = reminders - stale.toSet()
+            saveReminders()
+        }
+        if (dueReminder == null) {
+            val due = reminders.firstOrNull { it.startMillis - 30_000 <= now }
+            if (due != null) {
+                dueReminder = due
+                reminders = reminders - due
+                saveReminders()
+            }
+        }
+    }
+
+    fun watchReminder() {
+        dueReminder?.let { tuneToNumber(it.channel) }
+        dueReminder = null
+    }
+
+    fun dismissReminder() {
+        dueReminder = null
+    }
+
     companion object {
         const val DEFAULT_SERVER_URL = ""
         private const val REFRESH_INTERVAL_MS = 15L * 60 * 1000
+        private const val STALE_REMINDER_MS = 5L * 60 * 1000
     }
 }

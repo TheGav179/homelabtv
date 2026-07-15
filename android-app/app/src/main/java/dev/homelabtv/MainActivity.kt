@@ -19,7 +19,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -38,6 +40,8 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -56,6 +60,7 @@ import dev.homelabtv.ui.menu.MenuOverlay
 import dev.homelabtv.ui.player.DetailsBanner
 import dev.homelabtv.ui.player.NumberEntryOverlay
 import dev.homelabtv.ui.player.PlayerSurface
+import dev.homelabtv.ui.player.ReminderOverlay
 import dev.homelabtv.ui.player.ZapperOverlay
 import dev.homelabtv.ui.player.rememberTvPlayerState
 import kotlinx.coroutines.delay
@@ -86,6 +91,8 @@ private val HANDLED_KEYS =
         KeyEvent.KEYCODE_ENTER,
         KeyEvent.KEYCODE_GUIDE,
         KeyEvent.KEYCODE_INFO,
+        KeyEvent.KEYCODE_LAST_CHANNEL,
+        KeyEvent.KEYCODE_DPAD_LEFT,
     )
 
 private fun digitFor(keyCode: Int): Int? =
@@ -220,6 +227,21 @@ private fun HomelabApp(viewModel: MainViewModel = viewModel()) {
         }
     }
 
+    // Reminder banner ("X is starting now") and set/removed feedback toast
+    var reminderToast by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(reminderToast) {
+        if (reminderToast != null) {
+            delay(3000)
+            reminderToast = null
+        }
+    }
+    LaunchedEffect(viewModel.dueReminder) {
+        if (viewModel.dueReminder != null) {
+            delay(45_000)
+            viewModel.dismissReminder()
+        }
+    }
+
     val rootFocus = remember { FocusRequester() }
     LaunchedEffect(overlay, showDetails) {
         if (overlay == Overlay.NONE && !showDetails) {
@@ -243,6 +265,7 @@ private fun HomelabApp(viewModel: MainViewModel = viewModel()) {
                 if (event.nativeKeyEvent.keyCode != KeyEvent.KEYCODE_BACK) return@onPreviewKeyEvent false
                 if (event.type == KeyEventType.KeyUp) {
                     when {
+                        viewModel.dueReminder != null && overlay == Overlay.NONE -> viewModel.dismissReminder()
                         showDetails -> showDetails = false
                         overlay == Overlay.SETTINGS -> overlay = Overlay.MENU
                         overlay != Overlay.NONE -> overlay = Overlay.NONE
@@ -301,6 +324,20 @@ private fun HomelabApp(viewModel: MainViewModel = viewModel()) {
                         zapperShowsClock = false
                         zapCounter++
                     }
+                    keyCode == KeyEvent.KEYCODE_LAST_CHANNEL -> {
+                        numberEntry = ""
+                        if (viewModel.jumpBack()) {
+                            zapperShowsClock = false
+                            zapCounter++
+                        }
+                    }
+                    keyCode == KeyEvent.KEYCODE_DPAD_LEFT -> {
+                        // D-pad left doubles as last-channel for remotes without the key
+                        if (viewModel.jumpBack()) {
+                            zapperShowsClock = false
+                            zapCounter++
+                        }
+                    }
                     keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER -> {
                         // Long-press OK opens the detailed banner — the remote's ⓘ key
                         // always summons Sony's own system InfoBar on top of everything
@@ -308,6 +345,11 @@ private fun HomelabApp(viewModel: MainViewModel = viewModel()) {
                         val isLongPress =
                             event.nativeKeyEvent.eventTime - event.nativeKeyEvent.downTime >= 600
                         when {
+                            viewModel.dueReminder != null -> {
+                                viewModel.watchReminder()
+                                zapperShowsClock = false
+                                zapCounter++
+                            }
                             numberEntry.isNotEmpty() -> commitEntry()
                             isLongPress -> {
                                 zapperVisible = false
@@ -374,6 +416,13 @@ private fun HomelabApp(viewModel: MainViewModel = viewModel()) {
                             zapCounter++
                         }
                     },
+                    reminderKeys = viewModel.reminders.map { "${it.channel}|${it.startMillis}" }.toSet(),
+                    onToggleReminder = { channel, program ->
+                        val added = viewModel.toggleReminder(channel, program)
+                        reminderToast =
+                            if (added) "⏰ Reminder set · ${program.title}"
+                            else "Reminder removed · ${program.title}"
+                    },
                 )
             Overlay.MENU,
             Overlay.SETTINGS ->
@@ -431,6 +480,27 @@ private fun HomelabApp(viewModel: MainViewModel = viewModel()) {
                     onExit = { (context as? ComponentActivity)?.finish() },
                 )
             Overlay.NONE -> {}
+        }
+
+        viewModel.dueReminder?.let { due ->
+            if (overlay == Overlay.NONE) {
+                ReminderOverlay(
+                    title = due.title,
+                    channelNumber = due.channel,
+                    modifier = Modifier.align(Alignment.TopCenter),
+                )
+            }
+        }
+
+        reminderToast?.let { toast ->
+            Box(
+                Modifier.align(Alignment.BottomStart)
+                    .padding(32.dp)
+                    .background(Color(0xF2161616), RoundedCornerShape(8.dp))
+                    .padding(horizontal = 16.dp, vertical = 10.dp)
+            ) {
+                Text(toast, color = Color.White, fontSize = 14.sp)
+            }
         }
 
         // Dark boot screen with a spinner instead of any bright flash

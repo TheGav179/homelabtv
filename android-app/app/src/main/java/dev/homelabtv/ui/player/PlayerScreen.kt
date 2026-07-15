@@ -156,6 +156,33 @@ fun PlayerSurface(
     }
 }
 
+/** Banner when a reminded show is starting: OK tunes to it, BACK dismisses. */
+@Composable
+fun ReminderOverlay(title: String, channelNumber: String, modifier: Modifier = Modifier) {
+    Column(
+        modifier
+            .padding(top = 32.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0xF2161616))
+            .padding(horizontal = 28.dp, vertical = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text("⏰ STARTING NOW", color = JellyfinBlue, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(4.dp))
+        Text(
+            title,
+            color = TextPrimary,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Text("on channel $channelNumber", color = TextSecondary, fontSize = 13.sp)
+        Spacer(Modifier.height(8.dp))
+        Text("OK · Watch      BACK · Dismiss", color = TextSecondary, fontSize = 12.sp)
+    }
+}
+
 /** Big on-screen readout while typing a channel number on the remote, e.g. "20.-". */
 @Composable
 fun NumberEntryOverlay(entry: String, modifier: Modifier = Modifier) {
