@@ -12,7 +12,7 @@ HomelabTV splits the jobs:
 
 ```
 ┌─────────────────────────┐          ┌──────────────────────────────┐
-│       Android TV        │          │ Homelab server (Docker)      │
+│       Android TV        │          │   Homelab server (Docker)    │
 │                         │   HTTP   │                              │
 │  Antenna → TV tuner ────┼────╳─────┤  XMLTV files (WebGrab+Plus,  │
 │  (video never leaves    │   guide  │  zap2xml, ...)               │
