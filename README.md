@@ -41,6 +41,8 @@ HomelabTV splits the jobs:
 
 This app assumes a mindset where the smart TV **never touches the internet**. A common way to get there: give the TV a static IP with a bogus (or empty) gateway, or block its MAC at the router — it can still reach everything on your LAN, but nothing beyond it. Telemetry, ads, and forced updates die at the router.
 
+> **⚠️ Mind IPv6.** The bogus-gateway trick only blocks IPv4 — if your LAN has IPv6, the TV auto-configures a working route straight past it and stays fully online. Verify from the TV (`adb shell ping6 google.com`); if it answers, disable IPv6 (or router advertisements) on the LAN, or block the TV's **MAC** at the router — per-address IPv6 blocking is whack-a-mole because devices rotate privacy addresses.
+
 HomelabTV is proof that the TV doesn't need WAN for any of this: live video comes off the antenna, and everything that *does* need the internet — XMLTV scraping, TMDB artwork — happens **server-side**. The TV only ever talks to your server over plain HTTP on your LAN, and thanks to the offline-first cache it doesn't even need *that* to keep working.
 
 ## Features
