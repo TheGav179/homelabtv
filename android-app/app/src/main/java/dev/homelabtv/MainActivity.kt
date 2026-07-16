@@ -51,6 +51,7 @@ import dev.homelabtv.data.mergeGuide
 import dev.homelabtv.theme.HomelabTVTheme
 import dev.homelabtv.theme.JellyfinBlue
 import dev.homelabtv.ui.MainViewModel
+import dev.homelabtv.ui.NumberEntryMode
 import dev.homelabtv.ui.guide.GUIDE_MINI_PLAYER_END
 import dev.homelabtv.ui.guide.GUIDE_MINI_PLAYER_HEIGHT
 import dev.homelabtv.ui.guide.GUIDE_MINI_PLAYER_TOP
@@ -194,11 +195,10 @@ private fun HomelabApp(viewModel: MainViewModel = viewModel()) {
         }
     }
 
-    // Direct channel entry from the remote's number keys. Majors complete after
-    // two digits — in the default leading-zero mode 6.1 is typed "06" (so 61.1
-    // stays reachable); quick mode lets a first digit above 5 complete the major
-    // by itself. The decimal part maxes out at two digits (hundredths), and a
-    // partial entry commits after a 2s pause either way.
+    // Direct channel entry from the remote's number keys. When a prefix (major
+    // or minor) is unambiguous for the current mode it completes instantly;
+    // otherwise a 2s pause commits whatever was typed. The decimal part maxes
+    // out at two digits (hundredths).
     var numberEntry by remember { mutableStateOf("") }
     val commitEntry: () -> Unit = {
         val target = numberEntry.trimEnd('.')
@@ -214,19 +214,13 @@ private fun HomelabApp(viewModel: MainViewModel = viewModel()) {
             if (entry.substringAfter('.').length < 2) entry += digit
         } else {
             entry += digit
-            val majorDone =
-                if (viewModel.numberEntryQuickMode) {
-                    (entry.length == 1 && digit > 5) || entry.length == 2
-                } else {
-                    entry.length == 2
-                }
-            if (majorDone) entry += "."
+            if (viewModel.isMajorEntryComplete(entry)) entry += "."
         }
         numberEntry = entry
     }
     LaunchedEffect(numberEntry) {
         if (numberEntry.isEmpty()) return@LaunchedEffect
-        if (numberEntry.substringAfter('.', "").length >= 2) {
+        if (viewModel.isMinorEntryComplete(numberEntry)) {
             commitEntry()
         } else {
             delay(2000)
@@ -473,8 +467,18 @@ private fun HomelabApp(viewModel: MainViewModel = viewModel()) {
                             }
                         }
                     },
-                    numberEntryQuickMode = viewModel.numberEntryQuickMode,
-                    onToggleNumberEntry = viewModel::toggleNumberEntryMode,
+                    entryModeLabel =
+                        when (viewModel.numberEntryMode) {
+                            NumberEntryMode.AUTO -> "Number Entry: Auto (learns your lineup)"
+                            NumberEntryMode.LEADING_ZERO -> "Number Entry: Leading Zero (06.x)"
+                            NumberEntryMode.QUICK -> "Number Entry: Quick"
+                        },
+                    onCycleEntryMode = viewModel::cycleNumberEntryMode,
+                    quickThresholdLabel =
+                        if (viewModel.numberEntryMode == NumberEntryMode.QUICK)
+                            "Quick Rule: first digit above ${viewModel.quickThreshold} completes"
+                        else null,
+                    onCycleQuickThreshold = viewModel::cycleQuickThreshold,
                     onRestartApp = {
                         val pm = context.packageManager
                         val relaunch =

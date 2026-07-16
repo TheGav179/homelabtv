@@ -2,7 +2,9 @@ package dev.homelabtv.data
 
 import java.util.TimeZone
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -34,6 +36,22 @@ class GuideModelsTest {
     @Test
     fun `normalizes dash and dot channel numbers to match`() {
         assertEquals(normalizeChannelNumber("7-1"), normalizeChannelNumber("7.1"))
+    }
+
+    @Test
+    fun `prefix completion is lineup aware`() {
+        val majors = setOf("6", "10", "13", "20", "61")
+        assertFalse(numberPrefixComplete("6", majors)) // 61 exists, must wait
+        assertFalse(numberPrefixComplete("1", majors)) // 10 and 13 exist
+        assertTrue(numberPrefixComplete("13", majors))
+        assertTrue(numberPrefixComplete("4", majors)) // nothing starts with 4
+        assertTrue(numberPrefixComplete("61", majors))
+
+        val minors = setOf("1", "2", "10", "12")
+        assertFalse(numberPrefixComplete("1", minors)) // could become 10 or 12
+        assertTrue(numberPrefixComplete("2", minors))
+        assertTrue(numberPrefixComplete("12", minors))
+        assertTrue(numberPrefixComplete("3", minors)) // nonexistent, but unambiguous
     }
 
     @Test

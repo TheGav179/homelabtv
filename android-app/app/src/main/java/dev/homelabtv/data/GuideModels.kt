@@ -68,6 +68,16 @@ fun ChannelGuide.programAfter(timeMillis: Long): Program? =
 /** "7-1" (TvContract style) and "7.1" (mapping UI style) are the same channel. */
 fun normalizeChannelNumber(value: String?): String = value?.trim()?.replace('-', '.') ?: ""
 
+/**
+ * Lineup-aware entry completion: a typed prefix is "complete" when no known
+ * number is a longer extension of it — typing more digits could never reach a
+ * different existing number, so the entry can commit immediately.
+ * With majors {6, 10, 13}: "6" completes instantly, "1" must wait; add a 61
+ * to the lineup and "6" starts waiting too.
+ */
+fun numberPrefixComplete(prefix: String, numbers: Set<String>): Boolean =
+    numbers.none { it.length > prefix.length && it.startsWith(prefix) }
+
 // Channel numbers sort as (major, minor) integer pairs, NOT as decimals —
 // 6.12 is the twelfth subchannel and comes after 6.6, not before.
 fun channelMajor(value: String?): Int =

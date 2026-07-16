@@ -20,11 +20,21 @@ import dev.homelabtv.data.XmltvTime
 import dev.homelabtv.data.channelMajor
 import dev.homelabtv.data.channelMinor
 import dev.homelabtv.data.normalizeChannelNumber
+import dev.homelabtv.data.numberPrefixComplete
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 data class Reminder(val channel: String, val title: String, val startMillis: Long)
+
+enum class NumberEntryMode {
+    /** Learn from the scanned lineup: complete a prefix as soon as it's unambiguous. */
+    AUTO,
+    /** Majors are always two digits: 6.1 is typed "06". */
+    LEADING_ZERO,
+    /** A first digit above the configurable threshold completes the major by itself. */
+    QUICK,
+}
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
 
@@ -43,17 +53,78 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     var serverUrl by mutableStateOf(prefs.getString("server_url", DEFAULT_SERVER_URL) ?: DEFAULT_SERVER_URL)
         private set
 
-    /**
-     * Number-entry style. false (default): leading-zero — majors are two digits,
-     * so 6.1 is typed "06" and 61.1 is "61". true: quick mode — a first digit
-     * above 5 completes the major by itself (handy where no majors start with 6-9).
-     */
-    var numberEntryQuickMode by mutableStateOf(prefs.getBoolean("number_entry_quick", false))
+    var numberEntryMode by mutableStateOf(loadNumberEntryMode())
         private set
 
-    fun toggleNumberEntryMode() {
-        numberEntryQuickMode = !numberEntryQuickMode
-        prefs.edit().putBoolean("number_entry_quick", numberEntryQuickMode).apply()
+    var quickThreshold by mutableIntStateOf(prefs.getInt("quick_threshold", 5).coerceIn(1, 8))
+        private set
+
+    fun cycleNumberEntryMode() {
+        numberEntryMode =
+            when (numberEntryMode) {
+                NumberEntryMode.AUTO -> NumberEntryMode.LEADING_ZERO
+                NumberEntryMode.LEADING_ZERO -> NumberEntryMode.QUICK
+                NumberEntryMode.QUICK -> NumberEntryMode.AUTO
+            }
+        prefs.edit().putString("number_entry_mode", numberEntryMode.name).apply()
+    }
+
+    fun cycleQuickThreshold() {
+        quickThreshold = if (quickThreshold >= 8) 1 else quickThreshold + 1
+        prefs.edit().putInt("quick_threshold", quickThreshold).apply()
+    }
+
+    private fun loadNumberEntryMode(): NumberEntryMode {
+        prefs.getString("number_entry_mode", null)?.let { stored ->
+            try {
+                return NumberEntryMode.valueOf(stored)
+            } catch (_: IllegalArgumentException) {}
+        }
+        // Migrate the old boolean setting; new installs default to AUTO
+        return if (prefs.getBoolean("number_entry_quick", false)) NumberEntryMode.QUICK
+        else NumberEntryMode.AUTO
+    }
+
+    private fun lineupMajors(): Set<String> =
+        physicalChannels
+            .map { normalizeChannelNumber(it.displayNumber).substringBefore('.') }
+            .map { it.trimStart('0').ifEmpty { "0" } }
+            .toSet()
+
+    private fun lineupMinors(major: Int): Set<String> =
+        physicalChannels
+            .filter { channelMajor(it.displayNumber) == major }
+            .map { normalizeChannelNumber(it.displayNumber).substringAfter('.', "") }
+            .filter { it.isNotEmpty() }
+            .toSet()
+
+    /** Should the typed major prefix auto-complete (jump to the decimal part)? */
+    fun isMajorEntryComplete(prefix: String): Boolean {
+        if (prefix.isEmpty()) return false
+        return when (numberEntryMode) {
+            NumberEntryMode.LEADING_ZERO -> prefix.length >= 2
+            NumberEntryMode.QUICK ->
+                prefix.length >= 2 || prefix.first() - '0' > quickThreshold
+            NumberEntryMode.AUTO -> {
+                val majors = lineupMajors()
+                when {
+                    majors.isEmpty() -> prefix.length >= 2 // no lineup to learn from
+                    prefix == "0" -> false // explicit leading-zero entry still works
+                    prefix.startsWith("0") -> true // "06" -> major 6
+                    else -> numberPrefixComplete(prefix, majors) || prefix.length >= 3
+                }
+            }
+        }
+    }
+
+    /** Should a typed "major.minor" entry commit immediately (no 2s wait)? */
+    fun isMinorEntryComplete(entry: String): Boolean {
+        val minorPart = entry.substringAfter('.', "")
+        if (minorPart.length >= 2) return true
+        if (minorPart.isEmpty() || numberEntryMode != NumberEntryMode.AUTO) return false
+        val major = entry.substringBefore('.').toIntOrNull() ?: return false
+        val minors = lineupMinors(major)
+        return minors.isNotEmpty() && numberPrefixComplete(minorPart, minors)
     }
 
     val fallbackInputId: String? by lazy { channelRepository.defaultTunerInputId() }
