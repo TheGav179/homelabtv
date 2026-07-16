@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" font-family="Roboto, 'Segoe UI', sans-serif">
+  <rect width="960" height="540" fill="#101010"/>
+
+  <!-- Hero: focused program -->
+  <text x="48" y="64" fill="#00A4DC" font-size="15" font-weight="600">13.4 · The Nest</text>
+  <text x="48" y="98" fill="#ffffff" font-size="30" font-weight="700">Hawaii Five-0</text>
+  <text x="48" y="124" fill="#00A4DC" font-size="15" font-weight="600">The Payoff · S3 E12</text>
+  <text x="48" y="148" fill="#b3b3b3" font-size="14">Wed Jul 15 · 11:00 AM – 12:00 PM</text>
+  <text x="48" y="174" fill="#b3b3b3" font-size="13">McGarrett investigates a robbery-kidnapping aboard a cruise ship while</text>
+  <text x="48" y="192" fill="#b3b3b3" font-size="13">Danny chases a lead across the island.</text>
+
+  <!-- Mini player -->
+  <rect x="620" y="24" width="300" height="169" fill="#000000" stroke="#444" stroke-width="1"/>
+  <polygon points="755,92 785,108 755,124" fill="#333333"/>
+  <text x="770" y="185" fill="#555555" font-size="11" text-anchor="middle">live video</text>
+
+  <!-- Time header -->
+  <text x="180" y="238" fill="#b3b3b3" font-size="12">11:00 AM</text>
+  <text x="375" y="238" fill="#b3b3b3" font-size="12">11:30 AM</text>
+  <text x="570" y="238" fill="#b3b3b3" font-size="12">12:00 PM</text>
+  <text x="765" y="238" fill="#b3b3b3" font-size="12">12:30 PM</text>
+
+  <!-- Now line -->
+  <rect x="255" y="222" width="2" height="296" fill="#00A4DC" opacity="0.8"/>
+
+  <!-- Row 1 -->
+  <text x="24" y="272" fill="#ffffff" font-size="14" font-weight="700">10.1</text>
+  <text x="24" y="290" fill="#b3b3b3" font-size="11">NBC HD</text>
+  <rect x="170" y="252" width="290" height="52" rx="6" fill="#2E2E2E" stroke="#00A4DC" stroke-opacity="0.6"/>
+  <text x="182" y="274" fill="#ffffff" font-size="13" font-weight="600">Today With Jenna</text>
+  <text x="182" y="292" fill="#b3b3b3" font-size="10">11:00 AM – 12:00 PM</text>
+  <rect x="464" y="252" width="386" height="52" rx="6" fill="#1E1E1E"/>
+  <text x="476" y="274" fill="#ffffff" font-size="13" font-weight="600">News10NBC at Noon</text>
+  <text x="476" y="292" fill="#b3b3b3" font-size="10">12:00 PM – 1:00 PM</text>
+
+  <!-- Row 2 (focused cell) -->
+  <text x="24" y="342" fill="#ffffff" font-size="14" font-weight="700">13.4</text>
+  <text x="24" y="360" fill="#b3b3b3" font-size="11">The Nest</text>
+  <rect x="170" y="322" width="290" height="52" rx="6" fill="#ffffff"/>
+  <text x="182" y="344" fill="#000000" font-size="13" font-weight="600">Hawaii Five-0</text>
+  <text x="182" y="362" fill="#000000" opacity="0.7" font-size="10">11:00 AM – 12:00 PM</text>
+  <rect x="464" y="322" width="190" height="52" rx="6" fill="#1E1E1E"/>
+  <text x="476" y="344" fill="#ffffff" font-size="13" font-weight="600">⏰ Cajun Pawn Stars</text>
+  <text x="476" y="362" fill="#b3b3b3" font-size="10">12:00 PM – 12:30 PM</text>
+  <rect x="658" y="322" width="192" height="52" rx="6" fill="#1E1E1E"/>
+  <text x="670" y="344" fill="#ffffff" font-size="13" font-weight="600">Storage Wars</text>
+  <text x="670" y="362" fill="#b3b3b3" font-size="10">12:30 PM – 1:00 PM</text>
+
+  <!-- Row 3 -->
+  <text x="24" y="412" fill="#ffffff" font-size="14" font-weight="700">20.2</text>
+  <text x="24" y="430" fill="#b3b3b3" font-size="11">Story Television</text>
+  <rect x="170" y="392" width="484" height="52" rx="6" fill="#2E2E2E" stroke="#00A4DC" stroke-opacity="0.6"/>
+  <text x="182" y="414" fill="#ffffff" font-size="13" font-weight="600">Unknown Civil War</text>
+  <text x="182" y="432" fill="#b3b3b3" font-size="10">11:00 AM – 12:30 PM</text>
+  <rect x="658" y="392" width="192" height="52" rx="6" fill="#1E1E1E"/>
+  <text x="670" y="414" fill="#ffffff" font-size="13" font-weight="600">Ancient Discoveries</text>
+  <text x="670" y="432" fill="#b3b3b3" font-size="10">12:30 PM – 1:30 PM</text>
+
+  <!-- Row 4 -->
+  <text x="24" y="482" fill="#ffffff" font-size="14" font-weight="700">61.1</text>
+  <text x="24" y="500" fill="#b3b3b3" font-size="11">GRIT</text>
+  <rect x="170" y="462" width="290" height="52" rx="6" fill="#2E2E2E" stroke="#00A4DC" stroke-opacity="0.6"/>
+  <text x="182" y="484" fill="#ffffff" font-size="13" font-weight="600">Gunsmoke</text>
+  <text x="182" y="502" fill="#b3b3b3" font-size="10">11:30 AM – 12:00 PM</text>
+  <rect x="464" y="462" width="386" height="52" rx="6" fill="#161616"/>
+  <text x="476" y="484" fill="#4d4d4d" font-size="11">No listings</text>
+</svg>

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="340" viewBox="0 0 640 340">
+  <defs>
+    <linearGradient id="monitor" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#1565C0"/>
+      <stop offset="1" stop-color="#26C6DA"/>
+    </linearGradient>
+    <linearGradient id="letters" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#1976D2"/>
+      <stop offset="1" stop-color="#4DD0E1"/>
+    </linearGradient>
+  </defs>
+  <rect x="70" y="70" width="240" height="160" rx="10" fill="url(#monitor)"/>
+  <rect x="82" y="82" width="216" height="136" fill="none" stroke="#ffffff" stroke-opacity="0.55" stroke-width="3"/>
+  <polygon points="172,230 208,230 218,258 162,258" fill="#1976D2"/>
+  <rect x="145" y="258" width="90" height="16" rx="8" fill="#1E88E5"/>
+  <path d="M350 110 L458 110 L458 138 L419 138 L419 238 L389 238 L389 138 L350 138 Z" fill="url(#letters)"/>
+  <path d="M470 110 L502 110 L526 202 L550 110 L582 110 L544 238 L512 238 Z" fill="url(#letters)"/>
+</svg>

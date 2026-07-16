@@ -11,13 +11,29 @@ android {
         minSdk = 24
         targetSdk = 36
         versionCode = 1
-        versionName = "1.0"
+        versionName = "0.1.0"
+    }
+
+    // Release signing comes from environment variables (set by CI from repo
+    // secrets); without them the release build falls back to the debug key so
+    // `assembleRelease` always produces an installable APK.
+    signingConfigs {
+        val keystorePath = System.getenv("HOMELABTV_KEYSTORE")
+        if (keystorePath != null) {
+            create("release") {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("HOMELABTV_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("HOMELABTV_KEY_ALIAS")
+                keyPassword = System.getenv("HOMELABTV_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
         }
     }
     compileOptions {

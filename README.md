@@ -1,8 +1,21 @@
-# HomelabTV
+<p align="center">
+  <img src="docs/logo.svg" alt="HomelabTV logo" width="400">
+</p>
+
+<p align="center">
+  <a href="https://github.com/TheGav179/homelabtv/actions/workflows/ci.yml"><img src="https://github.com/TheGav179/homelabtv/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/TheGav179/homelabtv/releases"><img src="https://img.shields.io/github/v/release/TheGav179/homelabtv?include_prereleases&label=release" alt="Latest release"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
+</p>
 
 An open-source live TV app for Android TV that uses your TV's **built-in tuner** for video and your **homelab server** for guide data — and keeps working when the server is down.
 
 Think of it as a replacement for the manufacturer's TV app (Sony's, in particular), with a Jellyfin-style UI, a real timeline guide, and none of the telemetry.
+
+<p align="center">
+  <img src="docs/guide-mock.svg" alt="Timeline guide" width="760">
+</p>
+<p align="center"><sub>Illustration of the guide — the TV's protected video path blocks direct screen captures, so real screenshots are welcome contributions.</sub></p>
 
 ## Why it's different
 
@@ -82,6 +95,17 @@ services:
 > **Tip:** if a guide scraper starts getting IP-blocked, route just that container through a VPN with [gluetun](https://github.com/qmcgaw/gluetun) (`network_mode: "service:gluetun"` on the scraper). The HomelabTV backend itself has no reason to go through it — only the scrapers talk to the outside world.
 
 ### 2. App
+
+**Option A — prebuilt APK**: download the latest `homelabtv-*.apk` from [Releases](https://github.com/TheGav179/homelabtv/releases) and sideload it:
+
+```bash
+adb connect <tv-ip>:5555
+adb install -r homelabtv-*.apk
+```
+
+(Or use any sideloading method you like — "Downloader"-style apps on the TV work too.)
+
+**Option B — build it yourself**:
 
 ```bash
 cd android-app
