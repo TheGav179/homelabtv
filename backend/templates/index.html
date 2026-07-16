@@ -24,6 +24,8 @@
         button.danger { background: #c62828; }
         button.danger:hover { background: #a01f1f; }
         .badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 0.7em; background: #444; margin-left: 10px; }
+        .chip { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.8em; background: #063a4d; border: 1px solid #00a4dc; color: #9adcf0; margin: 3px 4px 0 0; }
+        .chip a { color: #ff8a80; text-decoration: none; margin-left: 6px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -49,22 +51,28 @@
                         <div class="channel-info">
                             <div>{{ channel.name }} <span class="badge">{{ channel.source_file }}</span></div>
                             <div class="channel-id">{{ channel.id }}</div>
+                            <div v-if="(mappingsByXml[channel.id] || []).length">
+                                <span v-for="m in mappingsByXml[channel.id]" :key="m.physical_channel" class="chip">
+                                    {{ m.physical_channel }}
+                                    <a href="#" @click.prevent="deleteMapping(m.physical_channel)" title="Remove this mapping">&#10005;</a>
+                                </span>
+                            </div>
                         </div>
 
                         <div class="mapping-input">
-                            <label style="font-size: 0.8em; color:#aaa">Physical ATSC Channel # (Required)</label>
+                            <label style="font-size: 0.8em; color:#aaa">Add Physical Channel # (one listing can feed many channels)</label>
                             <input type="text" v-model="mappings[channel.id].physical" placeholder="e.g., 6.1" />
-                            
+
                             <label style="font-size: 0.8em; color:#aaa; margin-top:5px;">Override Name (Optional)</label>
                             <input type="text" v-model="mappings[channel.id].custom_name" placeholder="Custom display name" />
-                            
+
                             <label style="font-size: 0.8em; color:#aaa; margin-top:5px;">Override Poster URL (Optional)</label>
                             <input type="text" v-model="mappings[channel.id].custom_image" placeholder="http://..." />
-                            
+
                             <label style="font-size: 0.8em; color:#aaa; margin-top:5px;">Override Guide Source (Optional)</label>
                             <input type="text" v-model="mappings[channel.id].xml_source" placeholder="Custom XML URL or Path" />
 
-                            <button @click="saveMapping(channel.id)">Save Map & Overrides</button>
+                            <button @click="saveMapping(channel.id)">Add Mapping</button>
                         </div>
                     </li>
                 </ul>
@@ -104,8 +112,9 @@
             el: '#app',
             data: {
                 xmlChannels: [],
-                mappings: {},
-                reverseMappings: {}
+                mappings: {},        // form state per XMLTV id (what you're about to add)
+                mappingsByXml: {},   // existing mappings grouped by XMLTV id
+                reverseMappings: {}  // existing mappings keyed by physical channel
             },
             mounted() {
                 this.fetchData();
@@ -137,20 +146,25 @@
                                 }
                             });
 
-                            // Then fetch existing mappings and populate
+                            // Then fetch existing mappings. One XMLTV listing can map to
+                            // many physical channels, so group rather than overwrite —
+                            // and leave the add-mapping form untouched.
                             fetch('/api/mappings')
                                 .then(res => res.json())
                                 .then(data => {
                                     this.reverseMappings = {};
+                                    const byXml = {};
                                     data.forEach(m => {
-                                        this.$set(this.mappings, m.xmltv_id, {
-                                            physical: m.physical_channel,
-                                            custom_name: m.custom_name || '',
-                                            custom_image: m.custom_image || '',
-                                            xml_source: m.xml_source || ''
-                                        });
                                         this.$set(this.reverseMappings, m.physical_channel, m);
+                                        if (!byXml[m.xmltv_id]) byXml[m.xmltv_id] = [];
+                                        byXml[m.xmltv_id].push(m);
                                     });
+                                    Object.values(byXml).forEach(list => list.sort((a, b) => {
+                                        const pa = String(a.physical_channel).split(/[.\-]/).map(n => parseInt(n, 10) || 0);
+                                        const pb = String(b.physical_channel).split(/[.\-]/).map(n => parseInt(n, 10) || 0);
+                                        return (pa[0] - pb[0]) || ((pa[1] || 0) - (pb[1] || 0));
+                                    }));
+                                    this.mappingsByXml = byXml;
                                 });
                         });
                 },
@@ -172,8 +186,8 @@
                         body: JSON.stringify(payload)
                     }).then(res => res.json())
                     .then(data => {
+                        this.$set(this.mappings, xmltv_id, { physical: '', custom_name: '', custom_image: '', xml_source: '' });
                         this.fetchData();
-                        alert("Mapping & Overrides saved successfully!");
                     });
                 },
                 deleteMapping(physical) {
