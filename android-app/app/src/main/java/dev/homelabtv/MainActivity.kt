@@ -7,6 +7,7 @@ import android.media.tv.TvInputInfo
 import android.media.tv.TvInputManager
 import android.os.Bundle
 import android.os.SystemClock
+import android.util.Log
 import android.view.KeyEvent
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -228,12 +229,12 @@ private fun HomelabApp(viewModel: MainViewModel = viewModel()) {
         }
     }
 
-    // Reminder banner ("X is starting now") and set/removed feedback toast
-    var reminderToast by remember { mutableStateOf<String?>(null) }
-    LaunchedEffect(reminderToast) {
-        if (reminderToast != null) {
+    // Small bottom-left feedback toast (reminders set/removed, captions on/off)
+    var toast by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(toast) {
+        if (toast != null) {
             delay(3000)
-            reminderToast = null
+            toast = null
         }
     }
     LaunchedEffect(viewModel.dueReminder) {
@@ -306,7 +307,11 @@ private fun HomelabApp(viewModel: MainViewModel = viewModel()) {
                     return@onKeyEvent false
                 }
                 val digit = digitFor(keyCode)
-                if (digit == null && keyCode !in HANDLED_KEYS) return@onKeyEvent false
+                if (digit == null && keyCode !in HANDLED_KEYS) {
+                    // Surfaced in logcat so unknown remote buttons are easy to identify
+                    if (event.type == KeyEventType.KeyUp) Log.d("HomelabKeys", "unhandled key: $keyCode")
+                    return@onKeyEvent false
+                }
                 // Swallow KeyDown as well as KeyUp, so the system's own guide or
                 // channel UIs never react to keys this app owns (e.g. Sony's guide
                 // popping up over ours on KEYCODE_GUIDE)
@@ -420,7 +425,7 @@ private fun HomelabApp(viewModel: MainViewModel = viewModel()) {
                     reminderKeys = viewModel.reminders.map { "${it.channel}|${it.startMillis}" }.toSet(),
                     onToggleReminder = { channel, program ->
                         val added = viewModel.toggleReminder(channel, program)
-                        reminderToast =
+                        toast =
                             if (added) "⏰ Reminder set · ${program.title}"
                             else "Reminder removed · ${program.title}"
                     },
@@ -503,14 +508,14 @@ private fun HomelabApp(viewModel: MainViewModel = viewModel()) {
             }
         }
 
-        reminderToast?.let { toast ->
+        toast?.let { message ->
             Box(
                 Modifier.align(Alignment.BottomStart)
                     .padding(32.dp)
                     .background(Color(0xF2161616), RoundedCornerShape(8.dp))
                     .padding(horizontal = 16.dp, vertical = 10.dp)
             ) {
-                Text(toast, color = Color.White, fontSize = 14.sp)
+                Text(message, color = Color.White, fontSize = 14.sp)
             }
         }
 

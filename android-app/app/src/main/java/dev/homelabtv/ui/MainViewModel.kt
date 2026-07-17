@@ -134,6 +134,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     init {
         physicalChannels = channelRepository.getPhysicalChannels()
+        currentChannelIndex = restoreLastChannelIndex()
         viewModelScope.launch {
             guideRepository.loadCache()
             while (true) {
@@ -158,8 +159,25 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Re-query TvContract, e.g. after READ_TV_LISTINGS is granted or a channel rescan. */
     fun reloadChannels() {
+        val stayOn = currentChannel?.displayNumber
         physicalChannels = channelRepository.getPhysicalChannels()
-        currentChannelIndex = currentChannelIndex.coerceIn(0, (physicalChannels.size - 1).coerceAtLeast(0))
+        // Keep the viewer on the same channel number across a rescan when it still
+        // exists; otherwise fall back to whatever we last persisted, then index 0.
+        currentChannelIndex =
+            stayOn?.let { indexOfChannelNumber(it) }
+                ?: restoreLastChannelIndex()
+    }
+
+    private fun restoreLastChannelIndex(): Int {
+        val saved = prefs.getString("last_channel", null) ?: return 0
+        return indexOfChannelNumber(saved) ?: 0
+    }
+
+    private fun indexOfChannelNumber(displayNumber: String): Int? {
+        val target = normalizeChannelNumber(displayNumber)
+        return physicalChannels
+            .indexOfFirst { normalizeChannelNumber(it.displayNumber) == target }
+            .takeIf { it >= 0 }
     }
 
     fun updateServerUrl(url: String) {
@@ -175,6 +193,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         if (index == currentChannelIndex || index !in physicalChannels.indices) return
         previousChannelIndex = currentChannelIndex
         currentChannelIndex = index
+        // Remember by channel number (stable across rescans, unlike the index)
+        prefs.edit().putString("last_channel", physicalChannels[index].displayNumber).apply()
     }
 
     /** Swap back to the channel watched before this one ("last channel" key). */
