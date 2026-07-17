@@ -1,8 +1,12 @@
 import os
+import hashlib
+import urllib.parse
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
+import httpx
 import uvicorn
 import xml.etree.ElementTree as ET
 from xmltv_parser import parse_xmltv, parse_xmltv_programs
@@ -19,9 +23,79 @@ if not os.path.exists("templates"): os.makedirs("templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
+IMAGE_CACHE_DIR = os.path.join("static", "imgcache")
+IMAGE_EXT_BY_TYPE = {
+    "image/jpeg": ".jpg",
+    "image/jpg": ".jpg",
+    "image/png": ".png",
+    "image/webp": ".webp",
+    "image/gif": ".gif",
+}
+
 @app.on_event("startup")
 async def startup():
     await init_db()
+
+def local_image_url(url, request):
+    """Rewrites a remote image URL to a LAN URL served by this server, so the TV
+    (which may have no internet) never fetches artwork directly. Local /static
+    paths and URLs already pointing at us are just absolutized; None passes through."""
+    if not url:
+        return None
+    base = str(request.base_url).rstrip("/")
+    if url.startswith("/"):
+        return base + url
+    if url.startswith("http://") or url.startswith("https://"):
+        if url.startswith(base):
+            return url
+        return base + "/img?u=" + urllib.parse.quote(url, safe="")
+    return url
+
+def _is_blocked_host(host):
+    """Basic SSRF guard: don't let the proxy reach loopback/link-local/private hosts."""
+    if not host:
+        return True
+    host = host.lower()
+    if host in ("localhost", "0.0.0.0", "::1", "metadata.google.internal"):
+        return True
+    return (
+        host.startswith("127.")
+        or host.startswith("10.")
+        or host.startswith("192.168.")
+        or host.startswith("169.254.")
+        or any(host.startswith(f"172.{n}.") for n in range(16, 32))
+    )
+
+@app.get("/img")
+async def image_proxy(u: str):
+    """Fetch-and-cache proxy for remote artwork. The TV requests images from here
+    (on the LAN); the server downloads from TMDB/etc once, caches to disk, and
+    serves the bytes so images work even when the TV has no internet."""
+    parsed = urllib.parse.urlparse(u)
+    if parsed.scheme not in ("http", "https") or _is_blocked_host(parsed.hostname):
+        raise HTTPException(status_code=400, detail="Unsupported image URL")
+
+    os.makedirs(IMAGE_CACHE_DIR, exist_ok=True)
+    key = hashlib.sha256(u.encode("utf-8")).hexdigest()
+    for ext in (".jpg", ".png", ".webp", ".gif", ".img"):
+        cached = os.path.join(IMAGE_CACHE_DIR, key + ext)
+        if os.path.exists(cached):
+            return FileResponse(cached)
+
+    try:
+        async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
+            resp = await client.get(u)
+            resp.raise_for_status()
+    except Exception:
+        raise HTTPException(status_code=502, detail="Could not fetch image")
+
+    ctype = resp.headers.get("content-type", "").split(";")[0].strip()
+    if not ctype.startswith("image/"):
+        raise HTTPException(status_code=415, detail="Not an image")
+    ext = IMAGE_EXT_BY_TYPE.get(ctype, ".img")
+    with open(os.path.join(IMAGE_CACHE_DIR, key + ext), "wb") as f:
+        f.write(resp.content)
+    return Response(content=resp.content, media_type=ctype)
 
 @app.get("/")
 async def ui_home(request: Request):
@@ -177,15 +251,18 @@ async def get_enriched_guide(request: Request):
                 "backdrop_url": None,
             }
             if tmdb_meta:
-                prog_data["poster_url"] = override_data["custom_image"] if override_data["custom_image"] else tmdb_meta["poster_url"]
-                prog_data["backdrop_url"] = tmdb_meta["backdrop_url"]
+                raw_poster = override_data["custom_image"] if override_data["custom_image"] else tmdb_meta["poster_url"]
+                # Route all artwork through the LAN image proxy so the TV never
+                # needs internet access to load posters/backdrops.
+                prog_data["poster_url"] = local_image_url(raw_poster, request)
+                prog_data["backdrop_url"] = local_image_url(tmdb_meta["backdrop_url"], request)
             enriched_programs.append(prog_data)
 
         # Uploaded logo wins, then poster override, then the XMLTV icon.
-        # Local /static paths are absolutized so the TV app can load them.
-        logo = override_data["custom_logo"] or override_data["custom_image"] or xmltv_ch.get("icon") or None
-        if logo and logo.startswith("/"):
-            logo = str(request.base_url).rstrip("/") + logo
+        logo = local_image_url(
+            override_data["custom_logo"] or override_data["custom_image"] or xmltv_ch.get("icon") or None,
+            request,
+        )
 
         enriched_guide.append({
             "physical_channel": physical_ch,
